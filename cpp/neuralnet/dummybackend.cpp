@@ -40,15 +40,19 @@ void NeuralNet::freeComputeContext(ComputeContext* computeContext) {
   throw StringError("Dummy neural net backend: NeuralNet::freeComputeContext unimplemented");
 }
 
-LoadedModel* NeuralNet::loadModelFile(const string& file, int modelFileIdx) {
+LoadedModel* NeuralNet::loadModelFile(const string& file) {
   (void)file;
-  (void)modelFileIdx;
   throw StringError("Dummy neural net backend: NeuralNet::loadModelFile unimplemented");
 }
 
 void NeuralNet::freeLoadedModel(LoadedModel* loadedModel) {
   (void)loadedModel;
   throw StringError("Dummy neural net backend: NeuralNet::freeLoadedModel unimplemented");
+}
+
+string getModelName(const LoadedModel* loadedModel) {
+  (void)loadedModel;
+  throw StringError("Dummy neural net backend: NeuralNet::getModelName unimplemented");
 }
 
 int NeuralNet::getModelVersion(const LoadedModel* loadedModel) {
@@ -85,6 +89,9 @@ ComputeHandle* NeuralNet::createComputeHandle(
 void NeuralNet::freeComputeHandle(ComputeHandle* gpuHandle) {
   if(gpuHandle != NULL)
     throw StringError("Dummy neural net backend: NeuralNet::freeLocalGpuHandle unimplemented");
+}
+
+void NeuralNet::printDevices() {
 }
 
 InputBuffers* NeuralNet::createInputBuffers(const LoadedModel* loadedModel, int maxBatchSize, int nnXLen, int nnYLen) {

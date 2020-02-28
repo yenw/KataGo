@@ -83,14 +83,17 @@ struct LoadedModel {
   LoadedModel& operator=(const LoadedModel&) = delete;
 };
 
-LoadedModel* NeuralNet::loadModelFile(const string& file, int modelFileIdx) {
-  (void)modelFileIdx;
+LoadedModel* NeuralNet::loadModelFile(const string& file) {
   LoadedModel* loadedModel = new LoadedModel(file);
   return loadedModel;
 }
 
 void NeuralNet::freeLoadedModel(LoadedModel* loadedModel) {
   delete loadedModel;
+}
+
+string NeuralNet::getModelName(const LoadedModel* loadedModel) {
+  return loadedModel->modelDesc.name;
 }
 
 int NeuralNet::getModelVersion(const LoadedModel* loadedModel) {
@@ -259,8 +262,8 @@ static ComputeContext* createComputeContextForTesting(
   bool useFP16,
   bool useNHWC
 ) {
-  enabled_t useFP16Mode = useFP16 ? enabled_t::TRUE : enabled_t::FALSE;
-  enabled_t useNHWCMode = useNHWC ? enabled_t::TRUE : enabled_t::FALSE;
+  enabled_t useFP16Mode = useFP16 ? enabled_t::True : enabled_t::False;
+  enabled_t useNHWCMode = useNHWC ? enabled_t::True : enabled_t::False;
 
   std::function<OpenCLTuneParams(const string&,int)> getParamsForDeviceName =
     [](const string& name, int gpuIdxForTuning) {
@@ -345,8 +348,8 @@ struct ComputeHandleInternal {
     assert(progs != NULL);
     tuneParams = progs->tuneParams;
 
-    bool useNHWC = ctx->usingNHWCMode == enabled_t::TRUE ? true : false;
-    bool useFP16 = ctx->usingFP16Mode == enabled_t::TRUE ? true : false;
+    bool useNHWC = ctx->usingNHWCMode == enabled_t::True ? true : false;
+    bool useFP16 = ctx->usingFP16Mode == enabled_t::True ? true : false;
 
     if(inputsUseNHWC != false)
       throw StringError("OpenCL backend: inputsUseNHWC = false required, other configurations not supported");
@@ -2311,8 +2314,12 @@ ComputeHandle* NeuralNet::createComputeHandle(
   bool inputsUseNHWC,
   int gpuIdxForThisThread
 ) {
-  if(logger != NULL)
+  if(logger != NULL) {
     logger->write("OpenCL backend: Model version " + Global::intToString(loadedModel->modelDesc.version));
+    logger->write(
+      "OpenCL backend: Model name: " + loadedModel->modelDesc.name
+    );
+  }
 
   //Current implementation always tolerates excess nn len
   (void)requireExactNNLen;
@@ -2322,6 +2329,19 @@ ComputeHandle* NeuralNet::createComputeHandle(
 
 void NeuralNet::freeComputeHandle(ComputeHandle* handle) {
   delete handle;
+}
+
+//------------------------------------------------------------------------------
+
+void NeuralNet::printDevices() {
+  vector<DeviceInfo> devices = DeviceInfo::getAllDeviceInfosOnSystem(NULL);
+  for(int i = 0; i<devices.size(); i++) {
+    const DeviceInfo& device = devices[i];
+    string msg =
+      "Found OpenCL Device " + Global::intToString(device.gpuIdx) + ": " + device.name + " (" + device.vendor + ")" +
+      " (score " + Global::intToString(device.defaultDesirability) + ")";
+    cout << msg << endl;
+  }
 }
 
 //--------------------------------------------------------------

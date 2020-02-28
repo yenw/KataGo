@@ -1,5 +1,6 @@
 : Cuda backend: Found GPU Tesla V100-SXM2-16GB memory 16945512448 compute capability major 7 minor 0
 : Cuda backend: Model version 5 useFP16 = true useNHWC = true
+: Cuda backend: Model name: b6c96-s103408384-d26419149
 HASH: F483353C07BC083F44737F529FE0B862
    A B C D E F G H J
 13 . . . . . . . . .
@@ -55,8 +56,6 @@ Policy
 
 
 
-: Cuda backend: Found GPU Tesla V100-SXM2-16GB memory 16945512448 compute capability major 7 minor 0
-: Cuda backend: Model version 5 useFP16 = true useNHWC = true
 HASH: F483353C07BC083F44737F529FE0B862
    A B C D E F G H J
 13 . . . . . . . . .
@@ -112,8 +111,6 @@ Policy
 
 
 
-: Cuda backend: Found GPU Tesla V100-SXM2-16GB memory 16945512448 compute capability major 7 minor 0
-: Cuda backend: Model version 5 useFP16 = true useNHWC = true
 HASH: F483353C07BC083F44737F529FE0B862
    A B C D E F G H J
 13 . . . . . . . . .
@@ -169,8 +166,6 @@ Policy
 
 
 
-: Cuda backend: Found GPU Tesla V100-SXM2-16GB memory 16945512448 compute capability major 7 minor 0
-: Cuda backend: Model version 5 useFP16 = true useNHWC = true
 HASH: F483353C07BC083F44737F529FE0B862
    A B C D E F G H J
 13 . . . . . . . . .
@@ -226,8 +221,6 @@ Policy
 
 
 
-: Cuda backend: Found GPU Tesla V100-SXM2-16GB memory 16945512448 compute capability major 7 minor 0
-: Cuda backend: Model version 5 useFP16 = true useNHWC = true
 HASH: F483353C07BC083F44737F529FE0B862
    A B C D E F G H J
 13 . . . . . . . . .
@@ -283,8 +276,6 @@ Policy
 
 
 
-: Cuda backend: Found GPU Tesla V100-SXM2-16GB memory 16945512448 compute capability major 7 minor 0
-: Cuda backend: Model version 5 useFP16 = true useNHWC = true
 HASH: F483353C07BC083F44737F529FE0B862
    A B C D E F G H J
 13 . . . . . . . . .
@@ -340,8 +331,6 @@ Policy
 
 
 
-: Cuda backend: Found GPU Tesla V100-SXM2-16GB memory 16945512448 compute capability major 7 minor 0
-: Cuda backend: Model version 5 useFP16 = true useNHWC = true
 HASH: F483353C07BC083F44737F529FE0B862
    A B C D E F G H J
 13 . . . . . . . . .
@@ -397,8 +386,6 @@ Policy
 
 
 
-: Cuda backend: Found GPU Tesla V100-SXM2-16GB memory 16945512448 compute capability major 7 minor 0
-: Cuda backend: Model version 5 useFP16 = true useNHWC = true
 HASH: F483353C07BC083F44737F529FE0B862
    A B C D E F G H J
 13 . . . . . . . . .

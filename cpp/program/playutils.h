@@ -48,7 +48,7 @@ namespace PlayUtils {
 
   void adjustKomiToEven(
     Search* botB,
-    Search* botW,
+    Search* botW, //can be NULL if only one bot
     const Board& board,
     BoardHistory& hist,
     Player pla,
@@ -61,7 +61,7 @@ namespace PlayUtils {
   //Lead from WHITE's perspective
   float computeLead(
     Search* botB,
-    Search* botW,
+    Search* botW, //can be NULL if only one bot
     const Board& board,
     BoardHistory& hist,
     Player pla,
@@ -107,6 +107,38 @@ namespace PlayUtils {
     Player pla,
     int64_t numVisits,
     Logger& logger
+  );
+
+
+  struct BenchmarkResults {
+    int numThreads = 0;
+    int totalPositionsSearched = 0;
+    int totalPositions = 0;
+    int64_t totalVisits = 0;
+    double totalSeconds = 0;
+    int64_t numNNEvals = 0;
+    int64_t numNNBatches = 0;
+    double avgBatchSize = 0;
+
+    std::string toStringNotDone() const;
+    std::string toString() const;
+    std::string toStringWithElo(const BenchmarkResults* baseline, double secondsPerGameMove) const;
+
+    double computeEloEffect(double secondsPerGameMove) const;
+
+    static void printEloComparison(const std::vector<BenchmarkResults>& results, double secondsPerGameMove);
+  };
+
+  //Run benchmark on sgf positions. ALSO prints to stdout the ongoing result as it benchmarks.
+  BenchmarkResults benchmarkSearchOnPositionsAndPrint(
+    const SearchParams& params,
+    const CompactSgf* sgf,
+    int numPositionsToUse,
+    NNEvaluator* nnEval,
+    Logger& logger,
+    const BenchmarkResults* baseline,
+    double secondsPerGameMove,
+    bool printElo
   );
 
 }

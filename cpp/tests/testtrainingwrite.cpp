@@ -15,8 +15,6 @@ static NNEvaluator* startNNEval(
 ) {
   const string& modelName = modelFile;
   vector<int> gpuIdxByServerThread = {0};
-  vector<int> gpuIdxs = {0};
-  int modelFileIdx = 0;
   int maxBatchSize = 16;
   int maxConcurrentEvals = 1024;
   int nnXLen = NNPos::MAX_BOARD_LEN;
@@ -25,15 +23,15 @@ static NNEvaluator* startNNEval(
   int nnCacheSizePowerOfTwo = 16;
   int nnMutexPoolSizePowerOfTwo = 12;
   bool debugSkipNeuralNet = modelFile == "/dev/null";
-  float nnPolicyTemperature = 1.0;
   const string openCLTunerFile = "";
   bool openCLReTunePerBoardSize = false;
+  int numNNServerThreadsPerModel = 1;
+  bool nnRandomize = false;
+
   NNEvaluator* nnEval = new NNEvaluator(
     modelName,
     modelFile,
-    gpuIdxs,
     &logger,
-    modelFileIdx,
     maxBatchSize,
     maxConcurrentEvals,
     nnXLen,
@@ -43,24 +41,18 @@ static NNEvaluator* startNNEval(
     nnCacheSizePowerOfTwo,
     nnMutexPoolSizePowerOfTwo,
     debugSkipNeuralNet,
-    nnPolicyTemperature,
     openCLTunerFile,
     openCLReTunePerBoardSize,
-    useFP16 ? enabled_t::TRUE : enabled_t::FALSE,
-    useNHWC ? enabled_t::TRUE : enabled_t::FALSE
-  );
-
-  int numNNServerThreadsPerModel = 1;
-  bool nnRandomize = false;
-
-  nnEval->spawnServerThreads(
+    useFP16 ? enabled_t::True : enabled_t::False,
+    useNHWC ? enabled_t::True : enabled_t::False,
     numNNServerThreadsPerModel,
-    nnRandomize,
+    gpuIdxByServerThread,
     seed,
-    defaultSymmetry,
-    logger,
-    gpuIdxByServerThread
+    nnRandomize,
+    defaultSymmetry
   );
+
+  nnEval->spawnServerThreads();
 
   //Sleep briefly so that any debug messages printed by nnEval threads are output first
   std::this_thread::sleep_for (std::chrono::duration<double>(0.03));
@@ -203,6 +195,8 @@ void Tests::runSelfplayInitTestsWithNN(const string& modelFile) {
   logger.setLogToStdout(true);
   logger.setLogTime(false);
 
+  NNEvaluator* nnEval = startNNEval(modelFile,"nneval",logger,0,true,false,false);
+
   auto run = [&](
     const string& seedBase,
     const Rules& rules,
@@ -210,7 +204,8 @@ void Tests::runSelfplayInitTestsWithNN(const string& modelFile) {
     int numExtraBlack,
     bool makeGameFairForEmptyBoard
   ) {
-    NNEvaluator* nnEval = startNNEval(modelFile,seedBase+"nneval",logger,0,true,false,false);
+    nnEval->clearCache();
+    nnEval->clearStats();
 
     SearchParams params;
     params.maxVisits = 100;
@@ -300,7 +295,6 @@ void Tests::runSelfplayInitTestsWithNN(const string& modelFile) {
     }
     delete gameData;
     delete bot;
-    delete nnEval;
     cout << endl;
   };
 
@@ -351,7 +345,7 @@ void Tests::runSelfplayInitTestsWithNN(const string& modelFile) {
   run("testselfplayinith2-0button",r,0.5,2,false);
   run("testselfplayinith2-1button",r,0.5,2,false);
 
-
+  delete nnEval;
   NeuralNet::globalCleanup();
 }
 
@@ -366,6 +360,8 @@ void Tests::runMoreSelfplayTestsWithNN(const string& modelFile) {
   logger.setLogToStdout(true);
   logger.setLogTime(false);
 
+  NNEvaluator* nnEval = startNNEval(modelFile,"nneval",logger,0,true,false,false);
+
   auto run = [&](
     const string& seedBase,
     const Rules& rules,
@@ -373,7 +369,8 @@ void Tests::runMoreSelfplayTestsWithNN(const string& modelFile) {
     bool testLead,
     bool testSurpriseWeight
   ) {
-    NNEvaluator* nnEval = startNNEval(modelFile,seedBase+"nneval",logger,0,true,false,false);
+    nnEval->clearCache();
+    nnEval->clearStats();
 
     SearchParams params;
     params.maxVisits = 100;
@@ -452,7 +449,6 @@ void Tests::runMoreSelfplayTestsWithNN(const string& modelFile) {
     gameData->printDebug(cout);
     delete gameData;
     delete bot;
-    delete nnEval;
     cout << endl;
   };
 
@@ -472,7 +468,9 @@ void Tests::runMoreSelfplayTestsWithNN(const string& modelFile) {
     Rules rules,
     float komi
   ) {
-    NNEvaluator* nnEval = startNNEval(modelFile,seedBase+"nneval",logger,0,true,false,false);
+    nnEval->clearCache();
+    nnEval->clearStats();
+
     SearchParams params;
     string searchRandSeed = seedBase+"search";
     Search* bot = new Search(params, nnEval, searchRandSeed);
@@ -487,7 +485,6 @@ void Tests::runMoreSelfplayTestsWithNN(const string& modelFile) {
     cout << board << endl;
     cout << "LEAD: " << lead << endl;
     delete bot;
-    delete nnEval;
   };
 
   Rules rules = Rules::getTrompTaylorish();
@@ -721,7 +718,8 @@ xxxxxxxx.
     fancyModes.dataXLen = 13;
     fancyModes.dataYLen = 13;
 
-    NNEvaluator* nnEval = startNNEval(modelFile,"game init test nneval",logger,0,true,false,false);
+    nnEval->clearCache();
+    nnEval->clearStats();
 
     std::map<string,string> cfgParams({
         std::make_pair("maxMovesPerGame","5"),
@@ -773,9 +771,9 @@ xxxxxxxx.
     }
     delete gameRunner;
     delete forkData;
-    delete nnEval;
   }
 
+  delete nnEval;
   NeuralNet::globalCleanup();
 }
 
@@ -791,6 +789,8 @@ void Tests::runSekiTrainWriteTests(const string& modelFile) {
   logger.setLogToStdout(true);
   logger.setLogTime(false);
 
+  NNEvaluator* nnEval = startNNEval(modelFile,"nneval",logger,0,true,false,false);
+
   auto run = [&](const string& sgfStr, const string& seedBase, const Rules& rules) {
     int inputsVersion = 6;
     int maxRows = 256;
@@ -798,7 +798,8 @@ void Tests::runSekiTrainWriteTests(const string& modelFile) {
     int debugOnlyWriteEvery = 1000;
     TrainingDataWriter dataWriter(&cout,inputsVersion, maxRows, firstFileMinRandProp, nnXLen, nnYLen, debugOnlyWriteEvery, seedBase+"dwriter");
 
-    NNEvaluator* nnEval = startNNEval(modelFile,seedBase+"nneval",logger,0,true,false,false);
+    nnEval->clearCache();
+    nnEval->clearStats();
 
     SearchParams params;
     params.maxVisits = 30;
@@ -864,7 +865,6 @@ void Tests::runSekiTrainWriteTests(const string& modelFile) {
     dataWriter.flushIfNonempty();
     delete gameData;
     delete bot;
-    delete nnEval;
     delete sgf;
     cout << endl;
   };
@@ -893,7 +893,6 @@ void Tests::runSekiTrainWriteTests(const string& modelFile) {
   {
     cout << "==============================================================" << endl;
     cout << "Also testing status logic inference!" << endl;
-    NNEvaluator* nnEval = startNNEval(modelFile,"status nneval",logger,0,true,false,false);
     SearchParams params;
     string searchRandSeed = "test statuses";
     Search* bot = new Search(params, nnEval, searchRandSeed);
@@ -974,10 +973,9 @@ xo.ox.xoo
     }
 
     delete bot;
-    delete nnEval;
-
     cout << "==============================================================" << endl;
   }
 
+  delete nnEval;
   NeuralNet::globalCleanup();
 }

@@ -2391,14 +2391,17 @@ struct LoadedModel {
   LoadedModel& operator=(const LoadedModel&) = delete;
 };
 
-LoadedModel* NeuralNet::loadModelFile(const string& file, int modelFileIdx) {
-  (void)modelFileIdx;
+LoadedModel* NeuralNet::loadModelFile(const string& file) {
   LoadedModel* loadedModel = new LoadedModel(file);
   return loadedModel;
 }
 
 void NeuralNet::freeLoadedModel(LoadedModel* loadedModel) {
   delete loadedModel;
+}
+
+string NeuralNet::getModelName(const LoadedModel* loadedModel) {
+  return loadedModel->modelDesc.name;
 }
 
 int NeuralNet::getModelVersion(const LoadedModel* loadedModel) {
@@ -2712,30 +2715,32 @@ ComputeHandle* NeuralNet::createComputeHandle(
   bool useNHWC = false;
   //Old GPUs - use FP32 and explicitly fail if FP16 enabled
   if(prop.major < 5 || (prop.major == 5 && prop.minor < 3)) {
-    if(context->useFP16Mode == enabled_t::TRUE)
+    if(context->useFP16Mode == enabled_t::True)
       throw StringError("Cuda device versions below 5.3 do not support useFP16=true");
-    if(context->useNHWCMode == enabled_t::TRUE)
+    if(context->useNHWCMode == enabled_t::True)
       useNHWC = true;
   }
   //In theory these GPUs support FP16, so allow if the user wants.
   else if(prop.major < 6) {
-    if(context->useFP16Mode == enabled_t::TRUE)
+    if(context->useFP16Mode == enabled_t::True)
       useFP16 = true;
-    if(context->useNHWCMode == enabled_t::TRUE)
+    if(context->useNHWCMode == enabled_t::True)
       useNHWC = true;
   }
   //On Pascal architecture, default to using FP16 operations
+  //Actually, just use FP32 - there's a risk that on certain cards this might just be a lot worse.
+  //A user manually fine-tuning for performance can just enable it themselves if they know how.
   else if(prop.major < 7) {
-    if(context->useFP16Mode == enabled_t::TRUE || context->useFP16Mode == enabled_t::AUTO)
+    if(context->useFP16Mode == enabled_t::True)
       useFP16 = true;
-    if(context->useNHWCMode == enabled_t::TRUE)
+    if(context->useNHWCMode == enabled_t::True)
       useNHWC = true;
   }
   //On Volta and higher, use FP16 and NHWC together because we have tensor cores.
   else {
-    if(context->useFP16Mode == enabled_t::TRUE || context->useFP16Mode == enabled_t::AUTO)
+    if(context->useFP16Mode == enabled_t::True || context->useFP16Mode == enabled_t::Auto)
       useFP16 = true;
-    if(context->useNHWCMode == enabled_t::TRUE || (context->useNHWCMode == enabled_t::AUTO && useFP16))
+    if(context->useNHWCMode == enabled_t::True || (context->useNHWCMode == enabled_t::Auto && useFP16))
       useNHWC = true;
   }
   int nnXLen = context->nnXLen;
@@ -2753,6 +2758,9 @@ ComputeHandle* NeuralNet::createComputeHandle(
       " useFP16 = " + Global::boolToString(useFP16) +
       " useNHWC = " + Global::boolToString(useNHWC)
     );
+    logger->write(
+      "Cuda backend: Model name: " + loadedModel->modelDesc.name
+    );
   }
 
   ComputeHandle* gpuHandle = new ComputeHandle(
@@ -2764,6 +2772,19 @@ ComputeHandle* NeuralNet::createComputeHandle(
 void NeuralNet::freeComputeHandle(ComputeHandle* gpuHandle) {
   delete gpuHandle;
 }
+
+//------------------------------------------------------------------------------
+
+void NeuralNet::printDevices() {
+  int numDevices = 0;
+  cudaGetDeviceCount(&numDevices);
+  for(int i = 0; i<numDevices; i++) {
+    cudaDeviceProp prop;
+    cudaGetDeviceProperties(&prop, i);
+    cout << "Found CUDA device " << i << ": " << prop.name << endl;
+  }
+}
+
 
 //------------------------------------------------------------------------------
 
